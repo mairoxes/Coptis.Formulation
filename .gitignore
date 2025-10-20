@@ -1,0 +1,70 @@
+## Visual Studio / JetBrains IDEs
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.log
+
+## Blazor / WebAssembly
+wwwroot/dist/
+wwwroot/node_modules/
+node_modules/
+dist/
+build/
+
+## NuGet Packages
+*.nupkg
+*.snupkg
+packages/
+*.nuspec
+*.cache
+*.lock.json
+project.lock.json
+
+## Resharper / Rider
+_ReSharper*/
+*.DotSettings.user
+
+## Microsoft auto-generated
+Generated\ Files/
+TestResult*/
+*.vsp
+*.vspscc
+*.vssscc
+*.pdb
+*.cache
+*.tmp
+*.bak
+
+## Entity Framework
+Migrations/
+
+## Azure
+*.publishsettings
+*.azurePubxml
+PublishScripts/
+
+## OS-specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+Icon?
+
+## Environment / Config
+.env
+secrets.json
+appsettings.Development.json
+
+## Temporary files
+*.swp
+*.tmp
+*.bak
+*.old
