@@ -1,27 +1,65 @@
-﻿using System.Net.Http;
+﻿// Replace ENTIRE file: Coptis.Formulation.WebAssembly/Services/FormulasApiClient.cs
+
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Coptis.Formulation.Application.Contracts.Import.Dtos;
-using Coptis.Formulation.Application.Models;
 
-namespace Coptis.Formulation.WebAssembly.Services;
-
-public sealed class FormulasApiClient(HttpClient http)
+namespace Coptis.Formulation.WebAssembly.Services
 {
-    public async Task<IReadOnlyList<FormulaListItem>> GetAll(string? q = null, CancellationToken ct = default)
+    public sealed class FormulasApiClient
     {
-        var url = string.IsNullOrWhiteSpace(q) ? "api/formulas" : $"api/formulas?q={Uri.EscapeDataString(q)}";
-        var list = await http.GetFromJsonAsync<List<FormulaListItem>>(url, ct);
-        return list ?? new List<FormulaListItem>();
-    }
-    public async Task<ImportResult> Import(FormulaDto dto, CancellationToken ct = default)
-    {
-        var response = await http.PostAsJsonAsync("api/formulas/import", dto, ct);
-        var result = await response.Content.ReadFromJsonAsync<ImportResult>(cancellationToken: ct);
+        private readonly HttpClient _http;
 
-        return response.IsSuccessStatusCode
-            ? result ?? ImportResult.Ok()
-            : result ?? ImportResult.Fail(new());
+        public FormulasApiClient(HttpClient http)
+        {
+            _http = http;
+        }
+
+        public async Task<IReadOnlyList<FormulaListItem>> GetAll(string? query = null, CancellationToken ct = default)
+        {
+            var url = string.IsNullOrWhiteSpace(query)
+                ? "api/formulas"
+                : $"api/formulas?q={Uri.EscapeDataString(query)}";
+
+            var list = await _http.GetFromJsonAsync<List<FormulaListItem>>(url, ct);
+            return list ?? new List<FormulaListItem>();
+        }
+
+        public async Task<ImportResult> Import(FormulaDto dto, CancellationToken ct = default)
+        {
+            var response = await _http.PostAsJsonAsync("api/formulas/import", dto, ct);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ImportResult>(cancellationToken: ct);
+                return result ?? new ImportResult("Success", new List<string>());
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(ct);
+                return new ImportResult("Failed", new List<string> { errorContent });
+            }
+        }
+
+        public async Task<bool> Delete(string id, CancellationToken ct = default)
+        {
+            var response = await _http.DeleteAsync($"api/formulas/{id}", ct);
+            return response.IsSuccessStatusCode;
+        }
+
+        // Nested types - these are the DTOs used by the client
+        public record FormulaListItem(
+            string Id,
+            string Name,
+            decimal BatchWeight,
+            string WeightUnit,
+            decimal TotalCost,
+            bool IsHighlighted);
+
+        public record ImportResult(string Status, List<string> Messages);
     }
 }

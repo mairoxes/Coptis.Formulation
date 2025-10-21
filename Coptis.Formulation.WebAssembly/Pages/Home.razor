@@ -1,7 +1,51 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - Coptis Formulation</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-container">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="hero-icon">🧪</span>
+                Coptis Formulation
+            </h1>
+            <p class="hero-subtitle">
+                Your comprehensive cosmetic formula analysis tool
+            </p>
+        </div>
+    </div>
 
-Welcome to your new app.
+    <div class="features-grid">
+        <div class="feature-card feature-card-purple">
+            <div class="feature-icon">📋</div>
+            <h3>Formulas</h3>
+            <p>Import, manage, and analyze your cosmetic formulations</p>
+            <a href="/formulas" class="feature-link">View Formulas →</a>
+        </div>
+
+        <div class="feature-card feature-card-orange">
+            <div class="feature-icon">🧪</div>
+            <h3>Raw Materials</h3>
+            <p>Manage raw materials and update pricing with formula impact tracking</p>
+            <a href="/raw-materials" class="feature-link">Manage Materials →</a>
+        </div>
+
+        <div class="feature-card feature-card-violet">
+            <div class="feature-icon">🔬</div>
+            <h3>Substances</h3>
+            <p>Discover the most used substances by weight or formula count</p>
+            <a href="/substances" class="feature-link">Analyze Substances →</a>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Features</h2>
+        <ul class="features-list">
+            <li>✓ Import formulas via web interface or automatic file watching</li>
+            <li>✓ Automatic cost calculation based on raw material pricing</li>
+            <li>✓ Price impact tracking with formula highlighting</li>
+            <li>✓ Substance usage analysis by weight and occurrence</li>
+            <li>✓ Clean architecture with Domain-Driven Design principles</li>
+        </ul>
+    </div>
+</div>

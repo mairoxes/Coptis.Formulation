@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,15 +15,18 @@ namespace Coptis.Formulation.Application.Implementations.Services
     {
         private readonly IFormulaRepository _formulaRepo;
         private readonly IRawMaterialRepository _rawMaterialRepo;
+        private readonly ISubstanceRepository _substanceRepo;
         private readonly IUnitOfWork _uow;
 
         public FormulaImportService(
             IFormulaRepository formulaRepo,
             IRawMaterialRepository rawMaterialRepo,
+            ISubstanceRepository substanceRepo,
             IUnitOfWork uow)
         {
             _formulaRepo = formulaRepo;
             _rawMaterialRepo = rawMaterialRepo;
+            _substanceRepo = substanceRepo;
             _uow = uow;
         }
 
@@ -64,6 +68,35 @@ namespace Coptis.Formulation.Application.Implementations.Services
                     rawMaterial.PriceAmount = rmDto.Price.Amount;
                     rawMaterial.Currency = rmDto.Price.Currency;
                     rawMaterial.ReferenceUnit = rmDto.Price.ReferenceUnit;
+
+                    rawMaterial.SubstanceShares.Clear();
+                }
+
+                if (rmDto.Substances != null && rmDto.Substances.Count > 0)
+                {
+                    for (int j = 0; j < rmDto.Substances.Count; j++)
+                    {
+                        var substanceDto = rmDto.Substances[j];
+                        var substancePercentage = rmDto.SubstancePercentages.ElementAtOrDefault(j);
+
+                        var substance = await _substanceRepo.FindByName(substanceDto.Name, ct);
+                        if (substance == null)
+                        {
+                            substance = new Substance
+                            {
+                                Id = Guid.NewGuid(),
+                                Name = substanceDto.Name
+                            };
+                            await _substanceRepo.Add(substance, ct);
+                        }
+
+                        rawMaterial.SubstanceShares.Add(new RawMaterialSubstance
+                        {
+                            RawMaterialId = rawMaterial.Id,
+                            SubstanceId = substance.Id,
+                            Percentage = Math.Round(substancePercentage, 2, MidpointRounding.AwayFromZero)
+                        });
+                    }
                 }
 
                 var effectiveWeightG = Math.Round(dto.Weight * percentage / 100m, 2, MidpointRounding.AwayFromZero);

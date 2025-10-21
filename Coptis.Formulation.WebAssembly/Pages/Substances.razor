@@ -1,0 +1,164 @@
+﻿@page "/substances"
+@using Coptis.Formulation.WebAssembly.Services
+@inject SubstancesApiClient ApiClient
+
+<PageTitle>Substances - Coptis Formulation</PageTitle>
+
+<div class="substances-container">
+    <div class="header">
+        <div class="title-section">
+            <h3>Most Used Substances</h3>
+            <span class="badge">@substances.Count</span>
+        </div>
+        <div class="view-toggle">
+            <button class="@(viewMode == "weight" ? "btn-toggle active" : "btn-toggle")"
+                    @onclick='() => ChangeView("weight")'>
+                By Weight
+            </button>
+            <button class="@(viewMode == "count" ? "btn-toggle active" : "btn-toggle")"
+                    @onclick='() => ChangeView("count")'>
+                By Formula Count
+            </button>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading">⏳ Loading substances...</div>
+    }
+    else if (substances.Any())
+    {
+        <table class="substances-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    @if (viewMode == "weight")
+                    {
+                        <th>Total Weight (g)</th>
+                    }
+                    else
+                    {
+                        <th>Number of Formulas</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int rank = 1;
+                    foreach (var substance in substances)
+                    {
+                        <tr>
+                            <td>
+                                <span class="rank-badge @GetRankClass(rank)">
+                                    @(rank <= 3 ? GetMedal(rank) : rank.ToString())
+                                </span>
+                            </td>
+                            <td class="substance-name">@substance.Name</td>
+                            @if (viewMode == "weight")
+                            {
+                                <td>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: @GetBarWidth(substance.TotalWeight, substances.Max(s => s.TotalWeight))%"></div>
+                                        <span class="bar-value">@substance.TotalWeight.ToString("F2") g</span>
+                                    </div>
+                                </td>
+                            }
+                            else
+                            {
+                                <td>
+                                    <div class="bar-container">
+                                        <div class="bar bar-count" style="width: @GetBarWidth(substance.FormulaCount, substances.Max(s => s.FormulaCount))%"></div>
+                                        <span class="bar-value">@substance.FormulaCount formulas</span>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                        rank++;
+                    }
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p style="font-size: 3rem; margin-bottom: 1rem;">🔬</p>
+            <p>No substances found. Import formulas to populate this list.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<SubstancesApiClient.SubstanceUsageItem> substances = new();
+    private bool isLoading = true;
+    private string viewMode = "weight"; // "weight" or "count"
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSubstances();
+    }
+
+    private async Task LoadSubstances()
+    {
+        isLoading = true;
+        try
+        {
+            var result = viewMode == "weight"
+                ? await ApiClient.GetByWeight()
+                : await ApiClient.GetByCount();
+
+            substances = result.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading substances: {ex.Message}");
+            substances = new List<SubstancesApiClient.SubstanceUsageItem>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ChangeView(string mode)
+    {
+        viewMode = mode;
+        await LoadSubstances();
+    }
+
+    private string GetRankClass(int rank)
+    {
+        return rank switch
+        {
+            1 => "rank-gold",
+            2 => "rank-silver",
+            3 => "rank-bronze",
+            _ => "rank-normal"
+        };
+    }
+
+    private string GetMedal(int rank)
+    {
+        return rank switch
+        {
+            1 => "🥇",
+            2 => "🥈",
+            3 => "🥉",
+            _ => rank.ToString()
+        };
+    }
+
+    private double GetBarWidth(decimal value, decimal max)
+    {
+        if (max == 0) return 0;
+        return Math.Min((double)(value / max * 100), 100);
+    }
+
+    public class SubstanceUsageItem
+    {
+        public string Name { get; set; }
+        public decimal TotalWeight { get; set; }
+        public int FormulaCount { get; set; }
+    }
+}

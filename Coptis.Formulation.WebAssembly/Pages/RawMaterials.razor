@@ -1,0 +1,163 @@
+﻿@page "/raw-materials"
+@using Coptis.Formulation.WebAssembly.Services
+@inject RawMaterialsApiClient ApiClient
+
+<PageTitle>Raw Materials - Coptis Formulation</PageTitle>
+
+<div class="raw-materials-container">
+    <div class="header">
+        <div class="title-section">
+            <h3>Raw Materials</h3>
+            <span class="badge">@rawMaterials.Count</span>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading">⏳ Loading raw materials...</div>
+    }
+    else if (rawMaterials.Any())
+    {
+        <table class="raw-materials-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Unit</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var material in rawMaterials)
+                {
+                    <tr>
+                        <td>@material.Name</td>
+                        <td>
+                            @if (editingMaterialId == material.Id)
+                            {
+                                <input type="number" step="0.01" class="form-control-inline"
+                                       @bind="newPrice" placeholder="New price" />
+                            }
+                            else
+                            {
+                                <span>@material.PriceAmount.ToString("F2")</span>
+                            }
+                        </td>
+                        <td>@material.Currency / @material.ReferenceUnit</td>
+                        <td>
+                            @if (editingMaterialId == material.Id)
+                            {
+                                <button class="btn-action-save" @onclick="() => SavePrice(material.Id)">
+                                    💾 Save
+                                </button>
+                                <button class="btn-action-cancel" @onclick="CancelEdit">
+                                    ✖ Cancel
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn-action-edit" @onclick="() => StartEdit(material.Id, material.PriceAmount)">
+                                    ✏️ Update Price
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p style="font-size: 3rem; margin-bottom: 1rem;">🧪</p>
+            <p>No raw materials found. Import formulas to populate this list.</p>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(updateMessage))
+    {
+        <div class="alert alert-success" style="margin-top: 1.5rem;">
+            ✓ @updateMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-error" style="margin-top: 1.5rem;">
+            @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    private List<RawMaterialsApiClient.RawMaterialListItem> rawMaterials = new();
+    private bool isLoading = true;
+    private string? editingMaterialId = null;
+    private decimal newPrice = 0;
+    private string updateMessage = string.Empty;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRawMaterials();
+    }
+
+    private async Task LoadRawMaterials()
+    {
+        isLoading = true;
+        try
+        {
+            var result = await ApiClient.GetAll();
+            rawMaterials = result.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading raw materials: {ex.Message}");
+            rawMaterials = new List<RawMaterialsApiClient.RawMaterialListItem>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void StartEdit(string id, decimal currentPrice)
+    {
+        editingMaterialId = id;
+        newPrice = currentPrice;
+        updateMessage = string.Empty;
+        errorMessage = string.Empty;
+    }
+
+    private void CancelEdit()
+    {
+        editingMaterialId = null;
+        newPrice = 0;
+    }
+
+    private async Task SavePrice(string id)
+    {
+        try
+        {
+            var result = await ApiClient.UpdatePrice(id, newPrice);
+
+            if (result.Success)
+            {
+                updateMessage = $"Price updated successfully! {result.AffectedFormulasCount} formula(s) have been highlighted.";
+                errorMessage = string.Empty;
+                editingMaterialId = null;
+                await LoadRawMaterials();
+            }
+            else
+            {
+                updateMessage = string.Empty;
+                errorMessage = $"Failed to update price: {result.Message}";
+            }
+        }
+        catch (Exception ex)
+        {
+            updateMessage = string.Empty;
+            errorMessage = $"Error updating price: {ex.Message}";
+        }
+    }
+}

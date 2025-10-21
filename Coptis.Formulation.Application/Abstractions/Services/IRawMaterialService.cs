@@ -6,9 +6,9 @@ using Coptis.Formulation.Application.Models;
 
 namespace Coptis.Formulation.Application.Abstractions.Services
 {
-    public interface IFormulaService
+    public interface IRawMaterialService
     {
-        Task<IReadOnlyList<FormulaListItem>> GetAll(string? query, CancellationToken ct);
-        Task<bool> Delete(Guid id, CancellationToken ct);
+        Task<IReadOnlyList<RawMaterialListItem>> GetAll(CancellationToken ct);
+        Task<UpdatePriceResult> UpdatePrice(string id, decimal newPrice, CancellationToken ct);
     }
 }

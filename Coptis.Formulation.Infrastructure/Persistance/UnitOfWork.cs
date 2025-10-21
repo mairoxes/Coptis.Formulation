@@ -15,7 +15,18 @@ namespace Coptis.Formulation.Infrastructure.Persistence
             _db = db;
         }
 
-        public Task<int> SaveChanges(CancellationToken ct) => _db.SaveChangesAsync(ct);
+        public async Task<int> SaveChanges(CancellationToken ct)
+        {
+            try
+            {
+                var result = await _db.SaveChangesAsync(ct);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
 
         public async Task<IAsyncDisposable> BeginTransaction(CancellationToken ct)
         {

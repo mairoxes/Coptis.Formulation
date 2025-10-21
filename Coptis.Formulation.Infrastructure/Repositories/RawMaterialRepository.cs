@@ -1,17 +1,35 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Coptis.Formulation.Application.Abstractions.Repositories;
 using Coptis.Formulation.Domain.Entities;
 using Coptis.Formulation.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Coptis.Formulation.Infrastructure.Persistence.Repositories;
-
-public class RawMaterialRepository(AppDbContext db) : IRawMaterialRepository
+namespace Coptis.Formulation.Infrastructure.Persistence.Repositories
 {
-    public Task<RawMaterial?> FindByName(string name, CancellationToken ct) =>
-        db.RawMaterials.FirstOrDefaultAsync(r => r.Name == name, ct);
+    public sealed class RawMaterialRepository : IRawMaterialRepository
+    {
+        private readonly AppDbContext _db;
 
-    public async Task Add(RawMaterial rawMaterial, CancellationToken ct) =>
-        await db.RawMaterials.AddAsync(rawMaterial, ct);
+        public RawMaterialRepository(AppDbContext db)
+        {
+            _db = db;
+        }
+
+        public Task<RawMaterial?> FindByName(string name, CancellationToken ct) =>
+            _db.RawMaterials.FirstOrDefaultAsync(r => r.Name == name, ct);
+
+        public Task<RawMaterial?> FindById(Guid id, CancellationToken ct) =>
+            _db.RawMaterials.FirstOrDefaultAsync(r => r.Id == id, ct);
+
+        public async Task Add(RawMaterial rawMaterial, CancellationToken ct) =>
+            await _db.RawMaterials.AddAsync(rawMaterial, ct);
+
+        public Task<List<RawMaterial>> GetAll(CancellationToken ct) =>
+            _db.RawMaterials
+              .AsNoTracking()
+              .ToListAsync(ct);
+    }
 }
