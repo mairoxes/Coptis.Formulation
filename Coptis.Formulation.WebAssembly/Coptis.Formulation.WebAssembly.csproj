@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Folder Include="Shared\" />
+    <Folder Include="wwwroot\sample-data\" />
   </ItemGroup>
 
 </Project>
