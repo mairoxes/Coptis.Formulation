@@ -1,6 +1,4 @@
-﻿// Replace ENTIRE file: Coptis.Formulation.WebAssembly/Services/FormulasApiClient.cs
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -35,8 +33,17 @@ namespace Coptis.Formulation.WebAssembly.Services
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ImportResult>(cancellationToken: ct);
-                return result ?? new ImportResult("Success", new List<string>());
+                try
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ImportResult>(cancellationToken: ct);
+                    return result ?? new ImportResult("Success", new List<string>());
+
+                }
+                catch (Exception ex) {
+                    throw;
+
+                }
+
             }
             else
             {
@@ -51,7 +58,6 @@ namespace Coptis.Formulation.WebAssembly.Services
             return response.IsSuccessStatusCode;
         }
 
-        // Nested types - these are the DTOs used by the client
         public record FormulaListItem(
             string Id,
             string Name,

@@ -173,17 +173,31 @@
                 return;
             }
 
-            var dtoToSend = JsonSerializer.Deserialize<FormulaDto>(completeJson, new JsonSerializerOptions
+            // Configure JSON options to be more lenient
+            var jsonOptions = new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true
-            });
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+            };
+
+            // First, try to parse as a generic object to see what we're working with
+            Console.WriteLine("Attempting to parse JSON...");
+            var testParse = JsonSerializer.Deserialize<object>(completeJson, jsonOptions);
+            Console.WriteLine("JSON is valid");
+
+            // Now try to deserialize to FormulaDto
+            var dtoToSend = JsonSerializer.Deserialize<FormulaDto>(completeJson, jsonOptions);
 
             if (dtoToSend == null)
             {
-                importError = "Failed to parse JSON.";
+                importError = "Failed to parse JSON into FormulaDto structure.";
                 isImporting = false;
                 return;
             }
+
+            Console.WriteLine($"Parsed FormulaDto: Name={dtoToSend.Name}, Weight={dtoToSend.Weight}");
 
             var result = await ApiClient.Import(dtoToSend);
 
@@ -201,11 +215,13 @@
         }
         catch (JsonException ex)
         {
-            importError = $"Invalid JSON format: {ex.Message}";
+            importError = $"Invalid JSON format: {ex.Message}. Path: {ex.Path}, Line: {ex.LineNumber}, Position: {ex.BytePositionInLine}";
+            Console.WriteLine($"JSON Error Details: {ex}");
         }
         catch (Exception ex)
         {
             importError = $"Error importing formula: {ex.Message}";
+            Console.WriteLine($"Import Error: {ex}");
         }
         finally
         {
@@ -238,7 +254,6 @@
 
     private bool confirm(string message)
     {
-        // In real implementation, use JS Interop for confirmation
         return true;
     }
 }
