@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,7 +33,10 @@ namespace Coptis.Formulation.Application.Implementations.Services
         {
             var existing = await _formulaRepo.FindByName(dto.Name, ct);
             if (existing != null)
+            {
                 await _formulaRepo.Delete(existing, ct);
+                await _uow.SaveChanges(ct);
+            }
 
             var formula = new Formula
             {
@@ -69,7 +71,8 @@ namespace Coptis.Formulation.Application.Implementations.Services
                     rawMaterial.Currency = rmDto.Price.Currency;
                     rawMaterial.ReferenceUnit = rmDto.Price.ReferenceUnit;
 
-                    rawMaterial.SubstanceShares.Clear();
+                    await _rawMaterialRepo.RemoveSubstanceShares(rawMaterial.Id, ct);
+                    await _uow.SaveChanges(ct);
                 }
 
                 if (rmDto.Substances != null && rmDto.Substances.Count > 0)
